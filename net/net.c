@@ -324,6 +324,10 @@ void *qemu_get_nic_opaque(NetClientState *nc)
 
     return nic->opaque;
 }
+NetClientState *qemu_get_peer(NetClientState *nc)
+{
+        return nc->peer;
+}
 
 static void qemu_cleanup_net_client(NetClientState *nc)
 {
@@ -958,6 +962,7 @@ static int (* const net_client_init_fun[NET_CLIENT_DRIVER__MAX])(
         [NET_CLIENT_DRIVER_HUBPORT]   = net_init_hubport,
 #ifdef CONFIG_VHOST_NET_USER
         [NET_CLIENT_DRIVER_VHOST_USER] = net_init_vhost_user,
+        [NET_CLIENT_DRIVER_VHOST_VDPA] = net_init_vhost_vdpa,
 #endif
 #ifdef CONFIG_L2TPV3
         [NET_CLIENT_DRIVER_L2TPV3]    = net_init_l2tpv3,

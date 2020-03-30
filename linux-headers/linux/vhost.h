@@ -116,4 +116,35 @@
 #define VHOST_VSOCK_SET_GUEST_CID	_IOW(VHOST_VIRTIO, 0x60, __u64)
 #define VHOST_VSOCK_SET_RUNNING		_IOW(VHOST_VIRTIO, 0x61, int)
 
+#define VHOST_DEVICE_SET_STATE _IOW(VHOST_VIRTIO, 0x70, __u64)
+#define VHOST_DEVICE_S_STOPPED 0
+#define VHOST_DEVICE_S_RUNNING 1
+#define VHOST_DEVICE_S_MAX     2
+struct vhost_vdpa_op {
+    __u64 request;
+    __u32 flags;
+    __u32 size;
+    union {
+        __u64 u64;
+        struct vhost_vring_state state;
+        struct vhost_vring_file file;
+        struct vhost_vring_addr addr;
+        struct vhost_memory memory;
+    } payload;
+};
+#define VHOST_VFIO_OP_HDR_SIZE (offsetof(struct vhost_vdpa_op, payload))
+#define VHOST_VFIO_NEED_REPLY 0x1
+struct vhost_vdpa_config {
+        __u32 off;
+        __u32 len;
+        __u8 buf[0];
+};
+#define VHOST_VDPA_GET_DEVICE_ID        _IOR(VHOST_VIRTIO, 0x70, __u32)
+#define VHOST_VDPA_GET_STATUS           _IOR(VHOST_VIRTIO, 0x71, __u8)
+#define VHOST_VDPA_SET_STATUS           _IOW(VHOST_VIRTIO, 0x72, __u8)
+#define VHOST_VDPA_GET_CONFIG           _IOR(VHOST_VIRTIO, 0x73, struct vhost_vdpa_config)
+#define VHOST_VDPA_SET_CONFIG           _IOW(VHOST_VIRTIO, 0x74, struct vhost_vdpa_config)
+#define VHOST_VDPA_SET_VRING_ENABLE     _IOW(VHOST_VIRTIO, 0x75, struct vhost_vring_state)
+#define VHOST_VDPA_GET_VRING_NUM        _IOR(VHOST_VIRTIO, 0x76, __u16)
+#define VHOST_VDPA_SET_STATE _IOW(VHOST_VIRTIO, 0x70, __u64)
 #endif

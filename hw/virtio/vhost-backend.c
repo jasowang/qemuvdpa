@@ -286,6 +286,9 @@ int vhost_set_backend_type(struct vhost_dev *dev, VhostBackendType backend_type)
         dev->vhost_ops = &user_ops;
         break;
 #endif
+    case VHOST_BACKEND_TYPE_VDPA:
+        dev->vhost_ops = &vdpa_ops;
+        break;
     default:
         error_report("Unknown vhost backend type");
         r = -1;
