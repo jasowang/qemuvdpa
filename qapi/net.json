@@ -445,16 +445,16 @@
 #
 # Vhost-vdpa network backend
 #
-# @sysfsdev: name of a mdev dev path in sysfs
+# @vhostdev: name of a mdev dev path in sysfs
 #
 # @queues: number of queues to be created for multiqueue vhost-vdpa
-#          (default: 1) (Since 5.0)
+#          (default: 1) (Since 2.11)
 #
-# Since: 5.0
+# Since: 2.11
 ##
 { 'struct': 'NetdevVhostVDPAOptions',
   'data': {
-    '*sysfsdev':     'str',
+    '*vhostdev':     'str',
     '*queues':       'int' } }
 ##
 # @NetClientDriver:
