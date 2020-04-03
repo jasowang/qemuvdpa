@@ -7,7 +7,8 @@
 
 typedef struct VhostVDPA {
     int device_fd;
-
 } VhostVDPA;
+
+extern AddressSpace address_space_memory;
 
 #endif

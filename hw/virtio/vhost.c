@@ -745,7 +745,7 @@ static int vhost_virtqueue_set_addr(struct vhost_dev *dev,
         .log_guest_addr = vq->used_phys,
         .flags = enable_log ? (1 << VHOST_VRING_F_LOG) : 0,
     };
-    if(dev->vhost_ops->backend_type == VHOST_BACKEND_TYPE_VDPA){
+    if (dev->vhost_ops->backend_type == VHOST_BACKEND_TYPE_VDPA) {
         addr.desc_user_addr = (uint64_t)(unsigned long)vq->desc_phys;
         addr.avail_user_addr = (uint64_t)(unsigned long)vq->avail_phys;
         addr.used_user_addr = (uint64_t)(unsigned long)vq->used_phys;

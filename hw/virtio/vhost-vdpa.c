@@ -21,7 +21,6 @@
 #include "qemu/main-loop.h"
 #include <linux/kvm.h>
 #include "sysemu/kvm.h"
-extern AddressSpace address_space_memory;
 
 struct vhost_vdpa {
     VhostVDPA *vdpa;
@@ -51,9 +50,9 @@ static int vhost_vdpa_dma_map(struct vhost_vdpa *v, hwaddr iova, hwaddr size,
     int fd = vdpa->device_fd;
     int ret = 0;
     bool v2 = v->backend_features & (1ULL << VHOST_BACKEND_F_IOTLB_MSG_V2);
-    if(!v2){
-	    error_report("failed msg version write");
-	    return -1;
+    if (!v2) {
+        error_report("failed msg version write");
+        return -1;
     }
     msg.type = VHOST_IOTLB_MSG_V2;
     msg.iotlb.iova = iova;
@@ -63,8 +62,8 @@ static int vhost_vdpa_dma_map(struct vhost_vdpa *v, hwaddr iova, hwaddr size,
     msg.iotlb.type = VHOST_IOTLB_UPDATE;
 
     if (write(fd, &msg, sizeof(msg)) != sizeof(msg)) {
-        error_report( "failed to write, fd=%d, errno=%d (%s)\n",
-                fd, errno, strerror(errno));
+        error_report("failed to write, fd=%d, errno=%d (%s)",
+            fd, errno, strerror(errno));
         exit(1);
     }
 
@@ -85,8 +84,8 @@ static int vhost_vdpa_dma_unmap(struct vhost_vdpa *v, hwaddr iova,
     msg.iotlb.type = VHOST_IOTLB_INVALIDATE;
 
     if (write(fd, &msg, sizeof(msg)) != sizeof(msg)) {
-        error_report("failed to write, fd=%d, errno=%d (%s)\n",
-               fd, errno, strerror(errno));
+        error_report("failed to write, fd=%d, errno=%d (%s)",
+            fd, errno, strerror(errno));
         exit(1);
     }
 
@@ -134,10 +133,10 @@ static void vhost_vdpa_listener_region_add(MemoryListener *listener,
     ret = vhost_vdpa_dma_map(v, iova, int128_get64(llsize),
                              vaddr, section->readonly);
     if (ret) {
-        error_report("vhost vdpa map fail!\n");
+        error_report("vhost vdpa map fail!");
         if (memory_region_is_ram_device(section->mr)) {
             /* Allow unexpected mappings not to be fatal for RAM devices */
-            error_report("map ram fail!\n");
+            error_report("map ram fail!");
             exit(1);
             return;
         }
@@ -150,6 +149,7 @@ fail:
     if (memory_region_is_ram_device(section->mr)) {
         error_report("failed to vdpa_dma_map. pci p2p may not work");
         return;
+
     }
     /*
      * On the initfn path, store the first error in the container so we
@@ -193,7 +193,7 @@ static void vhost_vdpa_listener_region_del(MemoryListener *listener,
     if (try_unmap) {
         ret = vhost_vdpa_dma_unmap(v, iova, int128_get64(llsize));
         if (ret) {
-            error_report("vhost_vdpa dma unmap error!\n");
+            error_report("vhost_vdpa dma unmap error!");
         }
     }
 
@@ -238,7 +238,7 @@ static int vhost_vdpa_init(struct vhost_dev *dev, void *opaque)
     v->listener = vhost_vdpa_memory_listener;
     memory_listener_register(&v->listener, &address_space_memory);
     vhost_kernel_call(dev, VHOST_GET_BACKEND_FEATURES, &features);
-    v->backend_features = features; 
+    v->backend_features = features;
     dev->status = (VIRTIO_CONFIG_S_ACKNOWLEDGE | VIRTIO_CONFIG_S_DRIVER);
     return 0;
 }
@@ -257,7 +257,7 @@ static int vhost_vdpa_cleanup(struct vhost_dev *dev)
 
 static int vhost_vdpa_memslots_limit(struct vhost_dev *dev)
 {
-    int limit = 64; // XXX hardcoded for now
+    int limit = 64;
 
     return limit;
 }
@@ -272,8 +272,9 @@ static int vhost_vdpa_set_mem_table(struct vhost_dev *dev,
                                     struct vhost_memory *mem)
 {
 
-    if (mem->padding)
+    if (mem->padding) {
         return -1;
+    }
 
     return 0;
 }
@@ -322,17 +323,17 @@ static int vhost_vdpa_set_features(struct vhost_dev *dev,
     uint8_t status;
     uint32_t device_id;
     if (vhost_kernel_call(dev, VHOST_VDPA_GET_DEVICE_ID, &device_id)) {
-	error_report("%s get device id failed, errno=%d\n", __func__, errno);
+        error_report("%s get device id failed, errno=%d", __func__, errno);
     }
 
     status = 0;
     if (vhost_kernel_call(dev, VHOST_VDPA_SET_STATUS, &status)) {
-	error_report("%s reset failed, errno=%d\n", __func__, errno);
+        error_report("%s reset failed, errno=%d", __func__, errno);
     }
-    features |= (1ULL << VIRTIO_F_IOMMU_PLATFORM); // hack
+    features |= (1ULL << VIRTIO_F_IOMMU_PLATFORM);
     ret = vhost_kernel_call(dev, VHOST_SET_FEATURES, &features);
     if (ret) {
-	error_report("%s called, failed, errno=%d\n", __func__, errno);
+        error_report("%s called, failed, errno=%d", __func__, errno);
         return ret;
     }
     dev->status |= VIRTIO_CONFIG_S_FEATURES_OK;
@@ -372,7 +373,7 @@ static int vhost_vdpa_set_vring_enable(struct vhost_dev *dev, int enable)
             .num   = enable,
         };
 
-	state.num = 1;
+        state.num = 1;
 
         vhost_kernel_call(dev, VHOST_VDPA_SET_VRING_ENABLE, &state);
     }
@@ -385,18 +386,16 @@ static int vhost_vdpa_set_state(struct vhost_dev *dev, int state)
     int ret;
 
     if (state == VHOST_DEVICE_S_RUNNING) {
-     	    dev->status |= VIRTIO_CONFIG_S_DRIVER_OK;
-    }else if(state ==VHOST_DEVICE_S_STOPPED){
-
-	 	dev->status = VHOST_DEVICE_S_STOPPED;
-	}else{
-
-		dev->status |= state;
+        dev->status |= VIRTIO_CONFIG_S_DRIVER_OK;
+    } else if (state == VHOST_DEVICE_S_STOPPED) {
+        dev->status = VHOST_DEVICE_S_STOPPED;
+    } else {
+        dev->status |= state;
     }
 
     ret = vhost_kernel_call(dev, VHOST_VDPA_SET_STATUS, &dev->status);
     if (ret) {
-	    perror("SET_STATUS");
+        perror("SET_STATUS");
     }
     return ret;
 }

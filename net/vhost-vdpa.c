@@ -46,7 +46,7 @@ uint64_t vhost_vdpa_get_acked_features(NetClientState *nc)
     return s->acked_features;
 }
 
-static void vhost_vdpa_stop(int queues, NetClientState *ncs)
+static void vhost_vdpa_stop(NetClientState *ncs)
 {
     VhostVDPAState *s;
 
@@ -54,13 +54,13 @@ static void vhost_vdpa_stop(int queues, NetClientState *ncs)
 
     s = DO_UPCAST(VhostVDPAState, nc, ncs);
 
-        if (s->vhost_net) {
-            /* save acked features */
-            uint64_t features = vhost_net_get_acked_features(s->vhost_net);
-            if (features) {
-                s->acked_features = features;
-            }
-            vhost_net_cleanup(s->vhost_net);
+    if (s->vhost_net) {
+        /* save acked features */
+        uint64_t features = vhost_net_get_acked_features(s->vhost_net);
+        if (features) {
+            s->acked_features = features;
+         }
+        vhost_net_cleanup(s->vhost_net);
     }
 }
 
@@ -69,7 +69,6 @@ static int vhost_vdpa_start(NetClientState *ncs, void *be)
     VhostNetOptions options;
     struct vhost_net *net = NULL;
     VhostVDPAState *s;
-    int i=0;
 
     options.backend_type = VHOST_BACKEND_TYPE_VDPA;
 
@@ -78,20 +77,19 @@ static int vhost_vdpa_start(NetClientState *ncs, void *be)
     s = DO_UPCAST(VhostVDPAState, nc, ncs);
 
     options.net_backend = ncs;
-        options.opaque      = be;
-        options.busyloop_timeout = 0;
-        net = vhost_net_init(&options);
-        if (!net) {
-            error_report("failed to init vhost_net for queue");
-            goto err;
-        }
+    options.opaque      = be;
+    options.busyloop_timeout = 0;
+    net = vhost_net_init(&options);
+    if (!net) {
+        error_report("failed to init vhost_net for queue");
+        goto err;
+     }
 
-
-        if (s->vhost_net) {
-            vhost_net_cleanup(s->vhost_net);
-            g_free(s->vhost_net);
-        }
-        s->vhost_net = net;
+     if (s->vhost_net) {
+        vhost_net_cleanup(s->vhost_net);
+        g_free(s->vhost_net);
+     }
+     s->vhost_net = net;
 
     return 0;
 
@@ -99,20 +97,9 @@ err:
     if (net) {
         vhost_net_cleanup(net);
     }
-    vhost_vdpa_stop(i, ncs);
+    vhost_vdpa_stop(ncs);
     return -1;
 }
-
-    /* In case of RARP (message size is 60) notify backup to send a fake RARP.
-       This fake RARP will be sent by backend only for guest
-       without GUEST_ANNOUNCE capability.
-     */
-
-        /* extract guest mac address from the RARP message */
-
-
-
-
 static void vhost_vdpa_cleanup(NetClientState *nc)
 {
     VhostVDPAState *s = DO_UPCAST(VhostVDPAState, nc, nc);
@@ -155,25 +142,23 @@ static int net_vhost_vdpa_init(NetClientState *peer, const char *device,
     NetClientState *ncs;
     VhostVDPAState *s;
     int vdpa_device_fd;
-    
     assert(name);
 
-        nc = qemu_new_net_client(&net_vhost_vdpa_info, peer, device, name);
+    nc = qemu_new_net_client(&net_vhost_vdpa_info, peer, device, name);
     snprintf(nc->info_str, sizeof(nc->info_str), "vhost-vdpa");
     nc->queue_index = 0;
-        if (!nc0) {
-            nc0 = nc;
-            s = DO_UPCAST(VhostVDPAState, nc, nc);
-        }
-
-    ncs= nc;
+    if (!nc0) {
+        nc0 = nc;
+        s = DO_UPCAST(VhostVDPAState, nc, nc);
+    }
+    ncs = nc;
 
     s = DO_UPCAST(VhostVDPAState, nc, nc0);
 
     vdpa_device_fd = open(vhostdev, O_RDWR);
-    if (vdpa_device_fd == -1)
+    if (vdpa_device_fd == -1) {
         err(EXIT_FAILURE, "%s (%d)", vhostdev, errno);
-
+    }
     s->vhost_vdpa.device_fd = vdpa_device_fd;
     vhost_vdpa_start(ncs, (void *)&s->vhost_vdpa);
 
